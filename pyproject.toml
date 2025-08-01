@@ -6,4 +6,5 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "graphene>=3.4.3",
+    "loguru>=0.7.3",
 ]
