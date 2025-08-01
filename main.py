@@ -1,15 +1,29 @@
-from graphene import Schema, ObjectType, String
-from loguru import logger
+from graphene import Schema, ObjectType, String, Int, Boolean, Field
+
+
+class UserType(ObjectType):
+    id = Int()
+    name = String()
+    age = Int()
+    is_active = Boolean()
 
 
 # Root Class of the schema
 class Query(ObjectType):
-    hello = String(name=String(default_value="world"))
+    user = Field(UserType, user_id=Int())
 
-    # resolver function: responsible for fetching and returning the data for a particular field
-    def resolve_hello(self, info, name):
-        logger.info(f"Resolving hello for name: {name}")
-        return f"Hello, {name}!"
+    # dummy data store
+    users = [
+        {"id": 1, "name": "John", "age": 18, "is_active": True},
+        {"id": 2, "name": "Dave", "age": 28, "is_active": True},
+        {"id": 3, "name": "Ken", "age": 13, "is_active": False},
+        {"id": 4, "name": "Mark", "age": 48, "is_active": True},
+    ]
+
+    def resolve_user(self, info, user_id):
+        print(Query.users)
+        matched_users = [user for user in Query.users if user["id"] == user_id]
+        return matched_users[0] if matched_users else None
 
 # instance of the Schema
 schema = Schema(query=Query)
@@ -17,8 +31,11 @@ schema = Schema(query=Query)
 
 # query document
 gql = """
-{
-    hello(name: "GraphQL")
+query getUserById {
+    user(userId: 1) {
+        # age
+        isActive
+    }
 }
 """
 
