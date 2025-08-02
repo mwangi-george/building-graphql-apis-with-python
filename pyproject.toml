@@ -5,6 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.116.1",
     "graphene>=3.4.3",
     "loguru>=0.7.3",
+    "starlette-graphene>=0.4.0",
+    "uvicorn>=0.35.0",
 ]
