@@ -8,6 +8,9 @@ dependencies = [
     "fastapi>=0.116.1",
     "graphene>=3.4.3",
     "loguru>=0.7.3",
-    "starlette-graphene>=0.4.0",
+    "psycopg>=3.2.9",
+    "sqlalchemy>=2.0.42",
+    "starlette-graphene3>=0.6.0",
     "uvicorn>=0.35.0",
+    "websockets>=15.0.1",
 ]
