@@ -17,6 +17,7 @@ class Query(ObjectType):
     user = Field(UserType, user_id=Int())
     users_by_min_age = List(UserType, min_age=Int())
     users_by_id_or_name = List(UserType, id_or_name=String())
+    delete_user_by_id = List(UserType)
 
     # dummy data store
     users = [
@@ -40,6 +41,13 @@ class Query(ObjectType):
         matched_users = [user for user in Query.users if (user["id"] == id_or_name or user["name"] == id_or_name)]
         return matched_users if matched_users else None
 
+    @staticmethod
+    def resolve_delete_user_by_id(root, info, user_id) -> list[dict[str, Any]] | None:
+        matched_users = [user for user in Query.users if user["id"] == user_id]
+        user_index = Query.users.index(matched_users[0])
+        Query.users.pop(user_index)
+        print(Query.users)
+        return [user for user in Query.users]
 
 # Mutation
 class CreateUser(Mutation):
@@ -57,59 +65,104 @@ class CreateUser(Mutation):
     def mutate(root, info, name, age):
         user = {"id": len(Query.users) + 1, "name": name, "age": age, "is_active": False}
         Query.users.append(user)
-        return CreateUser.user
+        return CreateUser(user=user)
+
+
+class UpdateUser(Mutation):
+    class Arguments:
+        user_id = Int(required=True)
+        name = String()
+        age = Int()
+
+    user = Field(UserType)
+
+    @staticmethod
+    def mutate(root, info, user_id, name=None, age=None):
+        user = None
+        for u in Query.users:
+            if u["id"] == user_id:
+                user = u
+                break
+
+        if not user:
+            return None
+
+        if name is not None:
+           user["name"] = name
+
+        if age is not None:
+            user["age"] = age
+
+        return UpdateUser(user=user)
+
 
 class Mutation(ObjectType):
     create_user = CreateUser.Field()
+    update_user = UpdateUser.Field()
 
 # instance of the Schema
 schema = Schema(query=Query, mutation=Mutation)
 
 
 # query document
-gql = """
+gql_query = """
 query getUserById {
-    user(userId: 5) {
+    user(userId: 1) {
         id
         name
+        age
         isActive
     }
 }
-
-# query getUsersByMinAge {
-#     usersByMinAge(minAge: 48) {
-#         id
-#         name
-#         age
-#     }
-# }
 """
 
-gql_mutation = """
-mutation {
-    createUser(name: "Marvin", age: 18) {
+gql_update = """
+mutation updateUserById {
+    updateUser(userId: 1, name: "<NAME>", age: 18) {
         user {
+            id
             name
+            age
             isActive
         }
     }
-}   
-"""
-
-gql_query_2 = """
-query getUserByIdOrName {
-    usersByIdOrName(idOrName: "Marvin") {
-        id
-        name
-        isActive
-    }
 }
 """
 
+
+# gql_mutation = """
+# mutation {
+#     createUser(name: "Marvin", age: 18) {
+#         user {
+#             name
+#             isActive
+#         }
+#     }
+# }
+# """
+
+# gql_query_2 = """
+# query getUserByIdOrName {
+#     usersByIdOrName(idOrName: "Marvin") {
+#         id
+#         name
+#         isActive
+#     }
+# }
+# """
+
+# gql_delete_user_by_id = """
+# mutation deleteUserById {
+#     deleteUserById(userId: 5) {
+#         name
+#     }
+# }
+# """
+
 if __name__ == '__main__':
-    result = schema.execute(gql_mutation)
+    result = schema.execute(gql_query)
     print(result)
-    result = schema.execute(gql)
+    result = schema.execute(gql_update)
     print(result)
-    result = schema.execute(gql_query_2)
+    result = schema.execute(gql_query)
     print(result)
