@@ -1,5 +1,6 @@
 import jwt
 from loguru import logger
+from functools import wraps
 from graphql import GraphQLError
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -22,7 +23,6 @@ def generate_token(email: str) -> str:
     except Exception as e:
         logger.error(f"Failed to generate token: {str(e)}")
         raise Exception("Failed to generate token")
-
 
 def get_authenticated_user(context: dict) -> User:
     request_object = context.get('request')
@@ -47,7 +47,6 @@ def get_authenticated_user(context: dict) -> User:
     else:
         raise GraphQLError("Missing authentication token")
 
-
 def hash_password(password: str) -> str:
     ph = PasswordHasher()
     return ph.hash(password)
@@ -58,3 +57,14 @@ def verify_password(hashed_password: str, plain_password: str):
         ph.verify(hashed_password, plain_password)
     except VerifyMismatchError:
         raise GraphQLError("Invalid password")
+
+def admin_user(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        info = args[1]
+        user = get_authenticated_user(info.context)
+
+        if user.role != "admin":
+            raise GraphQLError("You are not authorized to perform this action")
+        return func(*args, **kwargs)
+    return wrapper

@@ -7,7 +7,10 @@ from loguru import logger
 from app.db.database import SessionLocal
 from app.db.models import User
 from app.gql.types import UserObject
-from app.utils import generate_token, verify_password, hash_password, get_authenticated_user
+from app.utils import (
+    generate_token, verify_password, hash_password,
+    get_authenticated_user, admin_user
+)
 
 
 class AddUser(Mutation):
@@ -49,12 +52,8 @@ class UpdateUser(Mutation):
 
     user = Field(lambda: UserObject)
 
-    # temp
-    authenticated_as = Field(String)
-
     @staticmethod
     def mutate(root, info, user_id, username=None, email=None, password=None, role=None):
-        authenticated_user = get_authenticated_user(info.context)
         session = SessionLocal()
         user = session.query(User).filter_by(id=user_id).first()
         if not user:
@@ -62,20 +61,17 @@ class UpdateUser(Mutation):
 
         if username:
             user.username = username
-
         if email:
             user.email = email
-
         if password:
             user.password = hash_password(password)
-
         if role:
             user.role = role
 
         try:
             session.commit()
             session.refresh(user)
-            return UpdateUser(user=user, authenticated_as=authenticated_user.email)
+            return UpdateUser(user=user)
         except IntegrityError as e:
             logger.error(f"IntegrityError: {str(e)}")
             session.rollback()
@@ -89,11 +85,14 @@ class DeleteUser(Mutation):
     success = Boolean()
 
     @staticmethod
+    @admin_user
     def mutate(root, info, user_id):
         session = SessionLocal()
         user = session.query(User).filter_by(id=user_id).first()
         if not user:
             raise Exception("User not found")
+        if user.role == 'admin':
+            raise GraphQLError("Admin account cannot be deleted")
         session.delete(user)
         session.commit()
         return DeleteUser(success=True)
