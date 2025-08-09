@@ -28,6 +28,7 @@ class Job(Base):
     created_at = Column(DateTime, default=datetime.datetime.now)
 
     employer = relationship("Employer", back_populates="jobs", lazy="joined")
+    job_applications = relationship("JobApplication", back_populates="job", lazy="joined")
 
 
 class User(Base):
@@ -39,3 +40,17 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now)
+
+    job_applications = relationship("JobApplication", back_populates="user", lazy="joined")
+
+
+class JobApplication(Base):
+    __tablename__ = "job_applications"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(Integer, ForeignKey('jobs.id', ondelete="CASCADE"))
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"))
+    created_at = Column(DateTime, default=datetime.datetime.now)
+
+    job = relationship("Job", back_populates="job_applications", lazy="joined")
+    user = relationship("User", back_populates="job_applications", lazy="joined")

@@ -18,3 +18,7 @@ users_data = [
     {"username": "diana", "email": "diana@gmail.com", "password": "zxcv", "role": "user"},
     {"username": "lucy", "email": "lucy@gmail.com", "password": "zxcv", "role": "user"},
 ]
+
+job_applications_data = [
+    {"job_id": 1, "user_id": 1}, {"job_id": 1, "user_id": 2}, {"job_id": 1, "user_id": 3}
+]
