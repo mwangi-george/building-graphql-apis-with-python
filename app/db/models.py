@@ -15,7 +15,8 @@ class Employer(Base):
     industry = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.now)
 
-    jobs = relationship("Job", back_populates="employer")
+    # Set up bidirectional relationship - joined ensures child rows are loaded when parent is loaded
+    jobs = relationship("Job", back_populates="employer", lazy="joined")
 
 class Job(Base):
     __tablename__ = "jobs"
@@ -26,4 +27,15 @@ class Job(Base):
     employer_id = Column(Integer, ForeignKey('employers.id', ondelete="CASCADE"))
     created_at = Column(DateTime, default=datetime.datetime.now)
 
-    employer = relationship("Employer", back_populates="jobs")
+    employer = relationship("Employer", back_populates="jobs", lazy="joined")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.now)

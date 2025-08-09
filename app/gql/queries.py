@@ -1,28 +1,46 @@
-from graphene import ObjectType, List
+from graphene import ObjectType, List, Field, Int
 
-from sqlalchemy.orm import joinedload
 from app.db.database import SessionLocal
-from app.db.models import Employer, Job
-from app.gql.types import EmployerObject, JobObject
-
-
-def get_employers():
-    with SessionLocal() as session:
-        return session.query(Employer).options(joinedload(Employer.jobs)).all()
-
-def get_jobs():
-    with SessionLocal() as session:
-        return session.query(Job).options(joinedload(Job.employer)).all()
+from app.db.models import Employer, Job, User
+from app.gql.types import EmployerObject, JobObject, UserObject
 
 
 class Query(ObjectType):
+    employer = Field(EmployerObject, employer_id=Int(required=True))
     employers = List(EmployerObject)
+
+    job = Field(JobObject, job_id=Int(required=True))
     jobs = List(JobObject)
+
+    user = Field(UserObject, user_id=Int(required=True))
+    users = List(UserObject)
+
+    @staticmethod
+    def resolve_employer(root, info, employer_id):
+        with SessionLocal() as session:
+            return session.query(Employer).filter_by(id=employer_id).first()
 
     @staticmethod
     def resolve_employers(root, info):
-        return get_employers()
+        with SessionLocal() as session:
+            return session.query(Employer).all()
+
+    @staticmethod
+    def resolve_job(root, info, job_id):
+        with SessionLocal() as session:
+            return session.query(Job).filter(Job.id == job_id).first()
 
     @staticmethod
     def resolve_jobs(root, info):
-        return get_jobs()
+        with SessionLocal() as session:
+            return session.query(Job).all()
+
+    @staticmethod
+    def resolve_user(root, info, user_id):
+        with SessionLocal() as session:
+            return session.query(User).filter_by(id=user_id).first()
+
+    @staticmethod
+    def resolve_users(root, info):
+        with SessionLocal() as session:
+            return session.query(User).all()

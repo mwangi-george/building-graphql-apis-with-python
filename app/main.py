@@ -5,9 +5,10 @@ from graphene import Schema
 from starlette_graphene3 import GraphQLApp, make_playground_handler
 
 from app.db.database import prepare_database
+from app.gql.mutations import Mutation
 from app.gql.queries import Query
 
-schema = Schema(query=Query)
+schema = Schema(query=Query, mutation=Mutation)
 
 
 # prepare database on startup

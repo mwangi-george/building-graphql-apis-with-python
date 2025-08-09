@@ -1,11 +1,12 @@
-from graphene import ObjectType, String, List, Field
-from app.db.data import employers_data, jobs_data
+from graphene import ObjectType, String, List, Field, DateTime
+
 
 class EmployerObject(ObjectType):
     id = String()
     name = String()
     contact_email = String()
     industry = String()
+    created_at = DateTime()
     jobs = List(lambda: JobObject)
 
     @staticmethod
@@ -18,8 +19,18 @@ class JobObject(ObjectType):
     title = String()
     description = String()
     employer_id = String()
+    created_at = DateTime()
     employer = Field(lambda: EmployerObject)
 
     @staticmethod
     def resolve_employer(root, info):
         return root.employer
+
+
+class UserObject(ObjectType):
+    id = String()
+    username = String()
+    email = String()
+    role = String()
+    created_at = DateTime()
+
