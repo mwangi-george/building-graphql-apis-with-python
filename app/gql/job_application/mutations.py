@@ -5,7 +5,7 @@ from loguru import logger
 from app.db.database import SessionLocal
 from app.db.models import JobApplication
 from app.gql.types import JobApplicationObject
-from app.utils import admin_user
+from app.utils import logged_in_user, admin_user
 
 
 class AddJobApplication(Mutation):
@@ -16,7 +16,7 @@ class AddJobApplication(Mutation):
     job_application = Field(lambda: JobApplicationObject)
 
     @staticmethod
-    @admin_user
+    @logged_in_user
     def mutate(root, info, job_id, user_id):
         with SessionLocal() as session:
             job_application = session.query(JobApplication).filter_by(job_id=job_id, user_id=user_id).first()

@@ -27,23 +27,20 @@ def generate_token(email: str) -> str:
 def get_authenticated_user(context: dict) -> User:
     request_object = context.get('request')
     auth_header = request_object.headers.get('Authorization')
+    token = auth_header.split(' ')
 
-    if auth_header:
-        token = auth_header.split(' ')[1]
-        logger.debug(f'token: {token}')
-
+    if auth_header and token[0] == "Bearer" and len(token) == 2:
         try:
-            payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=ALGORITHM)
-
+            payload = jwt.decode(jwt=token[1], key=SECRET_KEY, algorithms=ALGORITHM)
             with SessionLocal() as session:
                 user = session.query(User).filter_by(email=payload.get("sub")).first()
             if not user:
                 raise GraphQLError('Could authenticate user')
             return user
-        except jwt.ExpiredSignatureError:
-            raise GraphQLError('Token has expired')
+        except jwt.exceptions.PyJWTError:
+            raise GraphQLError('Ivalid authentication token')
         except Exception:
-            raise GraphQLError('Missing or ivalid token')
+            raise GraphQLError('Could not authenticate user')
     else:
         raise GraphQLError("Missing authentication token")
 
@@ -68,3 +65,13 @@ def admin_user(func):
             raise GraphQLError("You are not authorized to perform this action")
         return func(*args, **kwargs)
     return wrapper
+
+def logged_in_user(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        info = args[1]
+        get_authenticated_user(info.context)
+
+        return func(*args, **kwargs)
+    return wrapper
+

@@ -1,4 +1,9 @@
-DB_URL = "postgresql+psycopg://postgres:postgres@localhost/jobs_data"
-SECRET_KEY = "58d2f8febe917f59be89e12b9473a4a22bde5e2ceee5db98cfc9cffd98daa130"
-ALGORITHM = "HS256"
-TOKEN_EXPIRY_IN_MINUTES = 15
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DB_URL = os.environ.get("DB_URL")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = os.environ.get("ALGORITHM")
+TOKEN_EXPIRY_IN_MINUTES = int(os.environ.get("TOKEN_EXPIRY_IN_MINUTES"))
