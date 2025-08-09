@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker
 from app.db.data import employers_data, jobs_data, users_data, job_applications_data
 from app.db.models import Base, Employer, Job, User, JobApplication
 from app.settings.config import DB_URL
-from app.utils import hash_password
 
 # an engine is a factory for connections
 engine = create_engine(DB_URL)
@@ -12,6 +11,7 @@ SessionLocal = sessionmaker(bind=engine)
 
 
 def prepare_database():
+    from app.utils import hash_password
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     session = SessionLocal()

@@ -7,7 +7,7 @@ from loguru import logger
 from app.db.database import SessionLocal
 from app.db.models import User
 from app.gql.types import UserObject
-from app.utils import generate_token, verify_password
+from app.utils import generate_token, verify_password, hash_password, get_authenticated_user
 
 
 class AddUser(Mutation):
@@ -21,9 +21,13 @@ class AddUser(Mutation):
 
     @staticmethod
     def mutate(root, info, username, email, password, role):
-        session = SessionLocal()
+        if role == 'admin':
+            current_user = get_authenticated_user(info.context)
+            if current_user.role != 'admin':
+                raise GraphQLError('Only administrators can add new administrators')
 
-        user = User(username=username, email=email, password=password, role=role)
+        session = SessionLocal()
+        user = User(username=username, email=email, password=hash_password(password), role=role)
         session.add(user)
         try:
             session.commit()
@@ -45,8 +49,12 @@ class UpdateUser(Mutation):
 
     user = Field(lambda: UserObject)
 
+    # temp
+    authenticated_as = Field(String)
+
     @staticmethod
     def mutate(root, info, user_id, username=None, email=None, password=None, role=None):
+        authenticated_user = get_authenticated_user(info.context)
         session = SessionLocal()
         user = session.query(User).filter_by(id=user_id).first()
         if not user:
@@ -59,14 +67,19 @@ class UpdateUser(Mutation):
             user.email = email
 
         if password:
-            user.password = password
+            user.password = hash_password(password)
 
         if role:
             user.role = role
 
-        session.commit()
-        session.refresh(user)
-        return UpdateUser(user=user)
+        try:
+            session.commit()
+            session.refresh(user)
+            return UpdateUser(user=user, authenticated_as=authenticated_user.email)
+        except IntegrityError as e:
+            logger.error(f"IntegrityError: {str(e)}")
+            session.rollback()
+            raise Exception("Username or email already exists")
 
 
 class DeleteUser(Mutation):
