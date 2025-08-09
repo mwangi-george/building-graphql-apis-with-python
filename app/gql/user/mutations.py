@@ -1,10 +1,13 @@
 from graphene import Mutation, String, Field, Int, Boolean
+from graphql import GraphQLError
 from sqlalchemy.exc import IntegrityError
 from loguru import logger
+
 
 from app.db.database import SessionLocal
 from app.db.models import User
 from app.gql.types import UserObject
+from app.utils import generate_token, verify_password
 
 
 class AddUser(Mutation):
@@ -82,3 +85,20 @@ class DeleteUser(Mutation):
         session.commit()
         return DeleteUser(success=True)
 
+
+class LoginUser(Mutation):
+    class Arguments:
+        email = String(required=True)
+        password = String(required=True)
+
+    token = String()
+
+    @staticmethod
+    def mutate(root, info, email, password):
+        with SessionLocal() as session:
+            user = session.query(User).filter_by(email=email).first()
+            if not user:
+                raise GraphQLError("User not found")
+            verify_password(user.password, password)
+            token = generate_token(user.email)
+            return LoginUser(token=token)
