@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 app.mount(
-    path="/graphql",
+    path="/",
     app=GraphQLApp(
         schema=schema,
         on_get=make_playground_handler()
